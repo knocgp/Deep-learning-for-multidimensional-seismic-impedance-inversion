@@ -270,6 +270,7 @@ def train(args):
     # Common dataset parameters
     common_kwargs = {
         'wavelet_freq': args.wavelet_freq,
+        'velocity': args.velocity,
         'noise_level': args.noise_level,
         'smoothing_sigma': args.smoothing_sigma
     }
@@ -279,6 +280,7 @@ def train(args):
         dataset_kwargs = {
             **common_kwargs,
             'trace_length': args.trace_length,
+            'dz': args.dz,
             'use_initial_impedance': args.use_initial_impedance
         }
     else:  # 2d
@@ -286,6 +288,8 @@ def train(args):
             **common_kwargs,
             'profile_height': args.profile_height,
             'profile_width': args.profile_width,
+            'dz': args.dz,
+            'dx': args.dx,
             'num_wells': args.num_wells
         }
     
@@ -401,12 +405,18 @@ def main():
                         help='Number of wells per 2D profile')
     parser.add_argument('--use_initial_impedance', action='store_true', default=True,
                         help='Use initial impedance as input (Scheme B)')
+    parser.add_argument('--dz', type=float, default=4.0,
+                        help='Depth sampling interval in meters (default: 4.0m)')
+    parser.add_argument('--dx', type=float, default=25.0,
+                        help='Lateral sampling interval in meters (default: 25.0m)')
+    parser.add_argument('--velocity', type=float, default=3000.0,
+                        help='Average P-wave velocity in m/s (default: 3000 m/s)')
     parser.add_argument('--wavelet_freq', type=float, default=25.0,
                         help='Dominant frequency of Ricker wavelet (Hz)')
     parser.add_argument('--noise_level', type=float, default=0.02,
                         help='Noise level for synthetic seismic')
     parser.add_argument('--smoothing_sigma', type=float, default=20.0,
-                        help='Gaussian smoothing sigma for initial impedance')
+                        help='Gaussian smoothing sigma for initial impedance (in samples)')
     
     # System configuration
     parser.add_argument('--num_workers', type=int, default=4,

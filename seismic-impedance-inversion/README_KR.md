@@ -66,15 +66,22 @@ AI = ρ × V_p
 
 2. **탄성파 트레이스 생성**:
    ```
-   Seismic(t) = Wavelet(t) ⊗ Reflectivity(t) + Noise
+   Seismic(z) = Wavelet(z) ⊗ Reflectivity(z) + Noise
    ```
-   여기서 ⊗는 합성곱 연산
+   여기서 ⊗는 합성곱 연산, z는 깊이 (depth migration 이후)
 
 3. **주요 특성**:
    - 탄성파 데이터는 **대역제한적**(일반적으로 10-60 Hz)
    - 원본 임피던스는 **모든 주파수** 포함 (0-∞ Hz)
    - 탄성파 데이터는 **저주파 부족** (< 5-10 Hz)
    - 시추공 로그는 **고주파** 제공하지만 **희소한 공간 샘플링**
+
+4. **Depth Domain (본 구현)**:
+   - 모든 데이터가 **depth domain** (depth migration 이후)
+   - 논문과 일치: "depth-migrated seismic image"
+   - 임피던스와 탄성파가 깊이(미터)로 정렬됨
+   - 일반적 샘플링: dz = 4.0m (깊이), dx = 25.0m (측면)
+   - 역산 중 time-to-depth 변환 불필요
 
 ### 역문제: 탄성파로부터 임피던스 추정
 
@@ -326,18 +333,23 @@ tensorboard>=2.13.0
 
 ```bash
 # 기본 파라미터로 학습 (Scheme B: 탄성파 + 초기 임피던스)
-python train.py --model 1d --epochs 300 --batch_size 16 --lr 0.001
+# Depth domain 데이터: dz=4.0m, velocity=3000 m/s
+python train.py --model 1d --epochs 300 --batch_size 16 --lr 0.001 \
+    --dz 4.0 --velocity 3000.0
 
 # Scheme A 학습 (탄성파만)
-python train.py --model 1d --epochs 300 --use_initial_impedance False
+python train.py --model 1d --epochs 300 --use_initial_impedance False \
+    --dz 4.0 --velocity 3000.0
 ```
 
 ### 2. 2D 모델 학습
 
 ```bash
 # 약지도 학습으로 2D 모델 학습
+# Depth domain 파라미터: dz=4.0m (깊이), dx=25.0m (측면)
 python train.py --model 2d --epochs 300 --batch_size 8 --lr 0.001 \
-    --profile_height 200 --profile_width 200 --num_wells 10
+    --profile_height 200 --profile_width 200 --num_wells 10 \
+    --dz 4.0 --dx 25.0 --velocity 3000.0
 ```
 
 ### 3. 테스트/추론

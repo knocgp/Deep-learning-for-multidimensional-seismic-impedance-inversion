@@ -66,15 +66,22 @@ Seismic data is generated through the following physical process:
 
 2. **Seismic Trace Generation**:
    ```
-   Seismic(t) = Wavelet(t) ⊗ Reflectivity(t) + Noise
+   Seismic(z) = Wavelet(z) ⊗ Reflectivity(z) + Noise
    ```
-   Where ⊗ denotes convolution
+   Where ⊗ denotes convolution, z is depth (after depth migration)
 
 3. **Key Characteristics**:
    - Seismic data is **band-limited** (typically 10-60 Hz)
    - Original impedance contains **all frequencies** (0-∞ Hz)
    - Seismic data **lacks low frequencies** (< 5-10 Hz)
    - Well logs provide **high frequency** but **sparse spatial sampling**
+
+4. **Depth Domain (This Implementation)**:
+   - All data is in **depth domain** (after depth migration)
+   - Consistent with the paper: "depth-migrated seismic image"
+   - Impedance and seismic aligned in depth (meters)
+   - Typical sampling: dz = 4.0m (depth), dx = 25.0m (lateral)
+   - No time-to-depth conversion needed during inversion
 
 ### The Inverse Problem: Impedance from Seismic
 
@@ -326,18 +333,23 @@ tensorboard>=2.13.0
 
 ```bash
 # Train with default parameters (Scheme B: seismic + initial impedance)
-python train.py --model 1d --epochs 300 --batch_size 16 --lr 0.001
+# All data in depth domain: dz=4.0m, velocity=3000 m/s
+python train.py --model 1d --epochs 300 --batch_size 16 --lr 0.001 \
+    --dz 4.0 --velocity 3000.0
 
 # Train Scheme A (seismic only)
-python train.py --model 1d --epochs 300 --use_initial_impedance False
+python train.py --model 1d --epochs 300 --use_initial_impedance False \
+    --dz 4.0 --velocity 3000.0
 ```
 
 ### 2. Train a 2D Model
 
 ```bash
 # Train 2D model with weak supervision
+# Depth domain parameters: dz=4.0m (depth), dx=25.0m (lateral)
 python train.py --model 2d --epochs 300 --batch_size 8 --lr 0.001 \
-    --profile_height 200 --profile_width 200 --num_wells 10
+    --profile_height 200 --profile_width 200 --num_wells 10 \
+    --dz 4.0 --dx 25.0 --velocity 3000.0
 ```
 
 ### 3. Test/Inference
